@@ -7,6 +7,7 @@
         {
             "name": "aoc_2020",
             "request": "launch",
+            "program": "${cwd}/bin/aoc_2020.dart",
             "type": "dart"
         }
     ]

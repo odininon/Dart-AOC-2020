@@ -77,8 +77,13 @@ enum FileSection { fields, ourTicket, nearbyTickets }
 class Day16 extends Day {
   List<TicketField> fields = [];
   List<Ticket> tickets = [];
+  Ticket? ours;
 
-  Day16([this.fields = const [], this.tickets = const []]) : super(16);
+  Day16([
+    this.fields = const [],
+    this.tickets = const [],
+    this.ours,
+  ]) : super(16);
 
   @override
   Future<Day16> initialize() async {
@@ -102,9 +107,17 @@ class Day16 extends Day {
           fields.add(TicketField.fromString(line));
           break;
         case FileSection.ourTicket:
-          currentFileSection = FileSection.nearbyTickets;
+          if (line.isEmpty) {
+            currentFileSection = FileSection.nearbyTickets;
 
-          continue;
+            continue;
+          }
+          try {
+            ours = Ticket.fromString(line);
+          } catch (_) {
+            continue;
+          }
+          break;
         case FileSection.nearbyTickets:
           if (line.isEmpty) {
             break;
@@ -141,6 +154,76 @@ class Day16 extends Day {
 
   @override
   int part2() {
-    return -1;
+    List<Ticket> validTickets = tickets;
+    Map<String, List<int>> pairings = {};
+
+    validTickets.removeWhere((ticket) {
+      for (var value in ticket.values) {
+        if (!fields.fold(
+            false,
+            (previousValue, element) =>
+                previousValue || element.isValid(value))) {
+          return true;
+        }
+      }
+      return false;
+    });
+
+    validTickets.add(ours!);
+
+    for (var field in fields) {
+      List<int> validColumns = [];
+      for (var i = 0; i < tickets[0].values.length; i++) {
+        var isValid = true;
+        for (var ticket in tickets) {
+          var value = ticket.values[i];
+          isValid = isValid && field.isValid(value);
+        }
+
+        if (isValid) {
+          validColumns.add(i);
+        }
+      }
+
+      pairings[field.name] = validColumns;
+    }
+
+    Map<int, String> matches = {};
+
+    getMatchings(pairings, matches);
+
+    var mul = 1;
+
+    for (var match in matches.entries) {
+      if (match.value.contains('departure')) {
+        mul *= ours!.values[match.key];
+      }
+    }
+
+    return mul;
   }
+}
+
+void getMatchings(Map<String, List<int>> pairings, Map<int, String> matches) {
+  if (pairings.isEmpty) {
+    return;
+  }
+
+  int value = -1;
+
+  for (var pairing in pairings.entries) {
+    if (pairing.value.length == 1) {
+      value = pairing.value[0];
+      matches[value] = pairing.key;
+
+      pairings.remove(pairing.key);
+      break;
+    }
+  }
+
+  for (var pairing in pairings.entries) {
+    pairing.value.remove(value);
+  }
+
+  return getMatchings(pairings, matches);
 }

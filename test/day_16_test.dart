@@ -28,7 +28,9 @@ void main() {
       Ticket([38, 6, 12]),
     ];
 
-    day = Day16(fields, tickets);
+    var ourTicket = Ticket([]);
+
+    day = Day16(fields, tickets, ourTicket);
   });
 
   test('part 1', () {
